@@ -71,3 +71,4 @@ with DAG('user_automation',
         python_callable=stream_data
     )
 
+# stream_data()
