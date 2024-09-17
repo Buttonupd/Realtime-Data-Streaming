@@ -1,5 +1,5 @@
 # Zookeeper 
-version: '3'
+version: '3.9'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -11,7 +11,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 5000
     healthcheck: 
-      test: ['CMD', 'bash', '-c', "echo 'ruok' | ncat localhost 2181"]
+      test: ['CMD', 'bash', '-c', "echo 'ruok' | ncat localhost 2181"] # nc 
       interval: 10s
       timeout: 5s
       retries: 5
@@ -103,39 +103,23 @@ services:
       - confluent
     healthcheck:
       test: ["CMD", "curl", "-f", 'http://localhost:9021']
-      interval: 1m
-      timeout: 10s
-      retries: 5
-
-  postgres:
-    image: postgres:14.0
-    environment:
-      - POSTGRES_USER=airflow 
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow 
-    logging:
-      options:
-        max-size: 10m 
-        max-file: "3"
-    networks:
-      - confluent
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U airflow"]
       interval: 30s
       timeout: 10s
       retries: 5
 
-  webserver:
+  webserver: 
     image: apache/airflow:2.6.0-python3.9
     command: webserver
     entrypoint: ['/opt/airflow/script/entrypoint.sh']
     depends_on:
       - postgres
     environment:
-      - LOAD_EX=n 
-      - EXECUTOR=Sequential
-      - AIRFLOW__DATABASE__URL_SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW_WEBSERVER_SECRET=6578iuop;kkjlhkj
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY='SBRezyTUWEuyvw_cqKBDLIZ3nbYwxvAy74101DgrRPk='
+      - AIRFLOW__WEBSERVER__SECRET_KEY='somehushsecret'
+      - AIRFLOW__CORE__LOAD__EXAMPLES=False
+      - AIRFLOW__WEBSERVER__WORKERS=2    
     logging:
       options: 
         max-size: 10m 
@@ -160,17 +144,34 @@ services:
       webserver:
         condition: service_healthy
     volumes:
-      - D:/Kafka-streams/Realtime-Data-Streaming/script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
       - D:/Kafka-streams/Realtime-Data-Streaming/dags:/opt/airflow/dags
       - D:/Kafka-streams/Realtime-Data-Streaming/requirements.txt:/opt/airflow/requirements.txt
     environment:
-      - LOAD_EX=n 
-      - EXECUTOR=Sequential
-      - AIRFLOW__DATABASE__URL_SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW_WEBSERVER_SECRET=6578iuop;kkjlhkj
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY='SBRezyTUWEuyvw_cqKBDLIZ3nbYwxvAy74101DgrRPk='
+      - AIRFLOW__WEBSERVER__SECRET_KEY='somehushsecret'
     command: bash -c "pip install -r ./requirements.txt --no-cache-dir && airflow db upgrade && airflow scheduler"
     networks:
       - confluent
+  postgres:
+    image: postgres:14.0
+    environment:
+      - POSTGRES_USER=airflow 
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow 
+    logging:
+      options:
+        max-size: 10m 
+        max-file: "3"
+    networks:
+      - confluent
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
 
 networks:
   confluent:

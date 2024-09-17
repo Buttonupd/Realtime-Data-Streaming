@@ -15,7 +15,7 @@ default_args = {
 # Function to retrieve data from API
 
 def get_data():
-    res = requests.get('http://randomuser.me/api/')
+    res = requests.get('https://randomuser.me/api/')
     res = res.json()
     res = res['results'][0]
     return res
@@ -47,20 +47,52 @@ def format_data(res):
     data['picture_medium'] = res['picture']['medium']
     data['picture_thumbnail'] = res['picture']['thumbnail']
     data['nationality'] = res['nat']
+
     return data
 
+
+# def stream_data():
+#     res = get_data()
+#     if res:
+#         num = 10 
+#         while num <= 10:
+#             res = format_data(res=res)
+#             print("Dumping the json object", json.dumps(res, indent=2))
+#             try:
+#                 producer = KafkaProducer(
+#                     bootstrap_servers=['localhost:9092'],
+#                     max_block_ms=100000
+#                 )
+#                 producer.send('users_created', json.dumps(res).encode('utf-8'))
+#                 producer.flush()
+#             except Exception as e:
+#                 print(f"Error producing message to Kafka: {e}")
+#             num+=1
+#     else:
+#         print("Failed to retrieve data")
+import logging
 def stream_data():
-    res = get_data()
-    res = format_data(res=res)
-    # print(json.dumps(res, indent=2))
+
     producer = KafkaProducer(
         bootstrap_servers=['broker:29092'],
         max_block_ms=100000
     )
 
-    producer.send('users_created', json.dumps(res).encode('utf-8'))
+    curr_time = time.time()
+    while True:
+        if time.time() > curr_time + 60:
+            break
+        try:
+            res = get_data()
+            res = format_data(res)
+            print("Dumping the json object", json.dumps(res, indent=2))
+            producer.send('users_created', json.dumps(res).encode('utf-8'))
 
-# DAG initialization
+        except Exception as e:
+            logging.log(f'Error {e}')
+            continue
+# stream_data()
+# Initiliaze the dag
 with DAG('user_automation',
          default_args=default_args,
          schedule_interval='@daily',
@@ -71,4 +103,9 @@ with DAG('user_automation',
         python_callable=stream_data
     )
 
-# stream_data()
+
+#Jubilee 
+#KCB
+#Aripo Portal 
+#KWAL 
+#Eclectics - Data
