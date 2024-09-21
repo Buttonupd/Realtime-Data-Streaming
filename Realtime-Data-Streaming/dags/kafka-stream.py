@@ -51,7 +51,7 @@ def format_data(res):
 
 def stream_data():
     producer = KafkaProducer(
-        bootstrap_servers=['broker:29092'],  # Ensure correct Kafka server
+        bootstrap_servers=['172.20.10.12:9093'],  # Ensure correct Kafka server
         max_block_ms=100000
     )
 
