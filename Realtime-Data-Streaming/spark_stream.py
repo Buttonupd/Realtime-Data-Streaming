@@ -82,6 +82,9 @@ def create_spark_connection():
 
         s_conn = SparkSession.builder \
             .config("spark.jars", spark_jars) \
+            .config("spark.cassandra.connection.host", "172.20.10.12") \
+            .config("spark.cassandra.auth.username", "cassandra") \
+            .config("spark.cassandra.auth.password", "cassandra") \
             .appName('SparkDataStreaming') \
             .getOrCreate()
 
@@ -96,7 +99,7 @@ def connect_to_kafka(spark_conn):
     try:
         spark_df = spark_conn.readStream \
             .format('kafka') \
-            .option('kafka.bootstrap.servers', 'broker:29092') \
+            .option('kafka.bootstrap.servers', '172.20.10.12:9093') \
             .option('subscribe', 'users_created') \
             .option('startingOffsets', 'earliest') \
             .load()
@@ -110,7 +113,7 @@ def connect_to_kafka(spark_conn):
 def create_cassandra_connection():
     try:
         # connecting to the cassandra cluster
-        cluster = Cluster(['localhost'])
+        cluster = Cluster(['172.20.10.12'])
 
         cas_session = cluster.connect()
 
