@@ -104,8 +104,8 @@ if __name__ == "__main__":
         # Write streaming data to Parquet files
         streaming_query = (selection_df.writeStream
                            .format("parquet")
-                           .option("checkpointLocation", "D:/tmp/checkpoint")
-                           .option("path", "D:/tmp/parquet_output")  # Path to save Parquet files
+                           .option("checkpointLocation", "/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/")
+                           .option("path", "/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/parquet_output")  # Path to save Parquet files
                            .start())
 
         # Periodically load Parquet files into MSSQL
