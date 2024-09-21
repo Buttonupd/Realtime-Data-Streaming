@@ -74,7 +74,7 @@ def load_to_mssql():
             .getOrCreate()
 
         # JDBC URL to connect to MSSQL
-        jdbc_url = "jdbc:sqlserver://172.20.10.12:1433;databaseName=Eclectics;user=sa;password=Patterns2323@q;TrustServerCertificate=yes;"
+        jdbc_url = "jdbc:sqlserver://172.20.10.12:1433;databaseName=Eclectics;user=sa;password=Patterns2323@q;TrustServerCertificate=true;"
 
         # Read data from Parquet files
         parquet_df = spark.read.parquet("/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/parquet_output")
