@@ -11,7 +11,6 @@ def create_keyspace(session):
         CREATE KEYSPACE IF NOT EXISTS spark_streams
         WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};
     """)
-
     print("Keyspace created successfully!")
 
 
@@ -30,13 +29,11 @@ def create_table(session):
         phone TEXT,
         picture TEXT);
     """)
-
     print("Table created successfully!")
 
 
 def insert_data(session, **kwargs):
     print("inserting data...")
-
     user_id = kwargs.get('id')
     first_name = kwargs.get('first_name')
     last_name = kwargs.get('last_name')
@@ -62,26 +59,26 @@ def insert_data(session, **kwargs):
     except Exception as e:
         logging.error(f'could not insert data due to {e}')
 
+
 def create_spark_connection():
     s_conn = None
 
     try:
-        # Correct the paths to JAR files and add the Scala library
-        spark_jars = "{},{},{},{},{},{}".format(
-            os.getcwd() + "/../jars/spark-sql-kafka-0-10_2.12-3.3.0.jar", #sql-kafka
-            os.getcwd() + "/../jars/spark-streaming-kafka-0-10_2.12-3.3.0.jar", # streaming-kafka
-            os.getcwd() + "/../jars/spark-cassandra-connector_2.12-3.3.0.jar", # cassandra-connector
-            os.getcwd() + "/../jars/kafka-clients-3.3.0.jar", # kafka-clients
-            os.getcwd() + "/../jars/spark-token-provider-kafka-0-10_2.12-3.3.0.jar", # token
-            os.getcwd() + "/../jars/scala-library-2.12.17.jar",  # Add Scala library
-            os.getcwd() + "/../jars/slf4j-api-1.7.30.jar",
-            os.getcwd() + "../jars/cassandra-driver-core-3.7.2.jar",
-            os.getcwd() + "../jars/commons-pool2-2.12.0.jar"
-
-        )
+        # Use Maven coordinates for the required packages
+        spark_packages = ",".join([
+            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0",  # Kafka connector
+            "com.microsoft.sqlserver:mssql-jdbc:8.4.1.jre8",     # MSSQL JDBC driver
+            "org.apache.kafka:kafka-clients:3.3.0",              # Kafka clients
+            "com.datastax.spark:spark-cassandra-connector_2.12:3.3.0",  # Cassandra connector
+            "com.google.guava:guava:30.1-jre",                   # Guava
+            "org.scala-lang:scala-library:2.12.17",              # Scala library
+            "org.slf4j:slf4j-api:1.7.30",                        # SLF4J API for logging
+            "com.datastax.cassandra:cassandra-driver-core:3.7.2", # Cassandra driver core
+            "org.apache.commons:commons-pool2:2.12.0"            # Commons Pool
+        ])
 
         s_conn = SparkSession.builder \
-            .config("spark.jars", spark_jars) \
+            .config("spark.jars.packages", spark_packages) \
             .config("spark.cassandra.connection.host", "172.20.10.12") \
             .config("spark.cassandra.auth.username", "cassandra") \
             .config("spark.cassandra.auth.password", "cassandra") \
@@ -91,9 +88,10 @@ def create_spark_connection():
         s_conn.sparkContext.setLogLevel("ERROR")
         logging.info("Spark connection created successfully!")
     except Exception as e:
-        logging.error(f"Couldn't create the spark session due to exception {e}")
+        logging.error(f"Couldn't create the Spark session due to exception {e}")
 
     return s_conn
+
 
 def connect_to_kafka(spark_conn):
     try:
@@ -107,19 +105,18 @@ def connect_to_kafka(spark_conn):
         return spark_df
     except Exception as e:
         logging.error(f"Error while loading Kafka DataFrame: {e}")
-        logging.warning("Ensure that all required JARs are present and correct versions are used.")
+        logging.warning("Ensure that all required dependencies are present and correct versions are used.")
         raise e
+
 
 def create_cassandra_connection():
     try:
-        # connecting to the cassandra cluster
+        # Connect to the Cassandra cluster
         cluster = Cluster(['172.20.10.12'])
-
         cas_session = cluster.connect()
-
         return cas_session
     except Exception as e:
-        logging.error(f"Could not create cassandra connection due to {e}")
+        logging.error(f"Could not create Cassandra connection due to {e}")
         return None
 
 
@@ -146,29 +143,27 @@ def create_selection_df_from_kafka(spark_df):
 
 
 if __name__ == "__main__":
-    # create spark connection
+    # Create Spark connection
     spark_conn = create_spark_connection()
 
     if spark_conn is not None:
-        # connect to kafka with spark connection
+        # Connect to Kafka with Spark connection
         spark_df = connect_to_kafka(spark_conn)
         selection_df = create_selection_df_from_kafka(spark_df)
         session = create_cassandra_connection()
-        print('Kafka + Cassndra')
+        print('Kafka + Cassandra')
 
         if session is not None:
             create_keyspace(session)
             create_table(session)
 
             logging.info("Streaming is being started...")
-            print('here')
+            print('Streaming to Cassandra')
 
             streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
-                               .option('checkpointLocation', 'home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/')
+                               .option('checkpointLocation', '/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/')
                                .option('keyspace', 'spark_streams')
                                .option('table', 'created_users')
                                .start())
 
             streaming_query.awaitTermination()
-
-   
