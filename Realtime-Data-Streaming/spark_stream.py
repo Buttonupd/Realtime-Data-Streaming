@@ -164,7 +164,7 @@ if __name__ == "__main__":
             print('here')
 
             streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
-                               .option('checkpointLocation', '\tmp\checkpoint')
+                               .option('checkpointLocation', 'home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/')
                                .option('keyspace', 'spark_streams')
                                .option('table', 'created_users')
                                .start())
