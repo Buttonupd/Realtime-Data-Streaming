@@ -35,7 +35,7 @@ def connect_to_kafka(spark_conn):
     try:
         spark_df = spark_conn.readStream \
             .format('kafka') \
-            .option('kafka.bootstrap.servers', 'broker:29092') \
+            .option('kafka.bootstrap.servers', '172.20.10.12:9092') \
             .option('subscribe', 'users_created') \
             .option('startingOffsets', 'earliest') \
             .load()
