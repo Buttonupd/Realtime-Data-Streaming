@@ -77,7 +77,8 @@ def load_to_mssql():
         jdbc_url = "jdbc:sqlserver://172.20.10.12:1433;databaseName=Eclectics;user=sa;password=Patterns2323@q;TrustServerCertificate=yes;"
 
         # Read data from Parquet files
-        parquet_df = spark.read.parquet("/tmp/parquet_output")
+        parquet_df = spark.read.parquet("/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/parquet_output")
+
 
         # Write the data to MSSQL in batch mode
         parquet_df.write \
@@ -104,8 +105,8 @@ if __name__ == "__main__":
         # Write streaming data to Parquet files
         streaming_query = (selection_df.writeStream
                            .format("parquet")
-                           .option("checkpointLocation", "/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/")
-                           .option("path", "/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/parquet_output")  # Path to save Parquet files
+                           .option("checkpointLocation", "/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/") # linux path to write
+                           .option("path", "/home/data_eng/sparker/Realtime-Data-Streaming/Realtime-Data-Streaming/arte/tmp/parquet_output")  # linux Path to save Parquet files
                            .start())
 
         # Periodically load Parquet files into MSSQL
